@@ -52,6 +52,8 @@ Enter gene expression values or a gene symbol to check your disease risk predict
 based on our trained classifier on synthetic data.
 """)
 
+
+
 # --- Sidebar ---
 st.sidebar.header("Input Options")
 
