@@ -53,7 +53,6 @@ based on our trained classifier on synthetic data.
 """)
 
 
-
 # --- Sidebar ---
 st.sidebar.header("Input Options")
 
