@@ -65,7 +65,7 @@ option = st.sidebar.radio(
 if option == "Manual Gene Expression":
     st.sidebar.subheader("Input Mode")
     input_mode = st.sidebar.selectbox("Select input method:",
-                                      ["Full Gene Input", "Selective Gene Input", "Upload CSV File"])
+                                      ["Full Gene Input", "Upload CSV File"])
 
     if input_mode == "Full Gene Input":
         st.sidebar.write("Enter gene expression values (0 to 1 scale):")
@@ -116,62 +116,7 @@ if option == "Manual Gene Expression":
             else:
                 st.info("Healthy class not found in label classes for comparison.")
 
-    elif input_mode == "Selective Gene Input":
-        selected_genes = st.sidebar.multiselect("Select genes to input expression for:", genes)
-        if selected_genes:
-            user_input = {}
-            for gene in selected_genes:
-                user_input[gene] = st.sidebar.slider(gene, 0.0, 1.0, 0.5)
-
-            fill_genes = list(set(genes) - set(selected_genes))
-            mean_expr = df[genes].mean()
-
-            for gene in fill_genes:
-                user_input[gene] = mean_expr[gene]
-
-            if st.sidebar.button("Predict Disease Risk"):
-                input_df = pd.DataFrame([user_input])
-                prediction = model.predict(input_df)[0]
-                proba = model.predict_proba(input_df)[0]
-                prediction_label = le.inverse_transform([prediction])[0]
-
-                st.subheader("Prediction Result:")
-                st.write(f"Predicted Class: **{prediction_label}**")
-
-                proba_df = pd.DataFrame({
-                    "Disease": le.classes_,
-                    "Probability": proba
-                })
-                fig = px.bar(proba_df, x="Disease", y="Probability",
-                             color="Probability", color_continuous_scale='Viridis',
-                             title="Prediction Probabilities")
-                st.plotly_chart(fig)
-
-                if "Healthy" in le.classes_:
-                    healthy_samples = df[df["label"] == "Healthy"]
-                    if not healthy_samples.empty:
-                        mean_healthy_expr = healthy_samples[genes].mean()
-                        user_expr_series = pd.Series(user_input)
-
-                        comp_df = pd.DataFrame({
-                            "Gene": genes,
-                            "Your Expression": user_expr_series.values,
-                            "Healthy Average": mean_healthy_expr.values
-                        }).set_index("Gene")
-
-                        comp_df_plot = comp_df.reset_index().melt(id_vars="Gene",
-                                                                  var_name="Expression Type",
-                                                                  value_name="Expression Value")
-                        fig2 = px.bar(comp_df_plot, x="Gene", y="Expression Value",
-                                      color="Expression Type", barmode="group",
-                                      title="Your Gene Expression vs Healthy Average")
-                        st.plotly_chart(fig2)
-                    else:
-                        st.warning("No healthy samples found in the dataset for comparison.")
-                else:
-                    st.info("Healthy class not found in label classes for comparison.")
-        else:
-            st.sidebar.info("Please select at least one gene to input values.")
+    
 
     elif input_mode == "Upload CSV File":
         uploaded_file = st.sidebar.file_uploader("Upload CSV with gene expression data", type=["csv"])
