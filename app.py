@@ -244,6 +244,7 @@ elif option == "Search by Gene Symbol":
         else:
             st.warning("Please select or enter a valid gene symbol.")
 
+
 # --------------------------- DISEASE SEARCH ---------------------------
 elif option == "Search by Disease":
     disease = st.sidebar.selectbox("Select disease to compare:", le.classes_)
@@ -253,11 +254,38 @@ elif option == "Search by Disease":
         subset = df[df["label"] == disease]
         st.write(f"Showing expression values of {len(subset)} samples.")
 
-        mean_expression = subset[genes].mean().sort_values(ascending=False)
-        fig = px.bar(x=mean_expression.index, y=mean_expression.values,
+        mean_disease_expr = subset[genes].mean()
+        fig = px.bar(x=mean_disease_expr.index, y=mean_disease_expr.values,
                      labels={"x": "Gene", "y": "Mean Expression"},
                      title=f"Average Gene Expression in {disease}")
         st.plotly_chart(fig)
+
+        # Comparison with healthy samples
+        if "Healthy" in le.classes_:
+            healthy_samples = df[df["label"] == "Healthy"]
+            if not healthy_samples.empty:
+                mean_healthy_expr = healthy_samples[genes].mean()
+
+                comp_df = pd.DataFrame({
+                    "Gene": genes,
+                    f"{disease} Average": mean_disease_expr.values,
+                    "Healthy Average": mean_healthy_expr.values
+                }).set_index("Gene")
+
+                comp_df_plot = comp_df.reset_index().melt(id_vars="Gene",
+                                                          var_name="Expression Type",
+                                                          value_name="Expression Value")
+
+                fig2 = px.bar(comp_df_plot, x="Gene", y="Expression Value",
+                              color="Expression Type", barmode="group",
+                              title=f"{disease} vs Healthy Gene Expression")
+                st.plotly_chart(fig2)
+            else:
+                st.warning("No healthy samples found for comparison.")
+        else:
+            st.info("Healthy class not found in label classes for comparison.")
+
+
 
 st.markdown("---")
 st.write("© 2025 Gene Expression Explorer Hackathon Demo")
